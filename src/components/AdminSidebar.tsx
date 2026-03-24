@@ -1,5 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Shirt } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,13 +13,17 @@ const navItems = [
 
 const AdminSidebar = () => {
   const location = useLocation();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success('Logged out');
+  };
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border min-h-screen">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-sidebar-primary">
-          ✨ FreshPress
-        </h1>
+        <h1 className="text-xl font-bold text-sidebar-primary">✨ FreshPress</h1>
         <p className="text-xs text-sidebar-foreground/60 mt-1">Dry Cleaning Management</p>
       </div>
 
@@ -42,7 +48,10 @@ const AdminSidebar = () => {
       </nav>
 
       <div className="p-3 border-t border-sidebar-border">
-        <button className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+        >
           <LogOut className="h-5 w-5" />
           Logout
         </button>
