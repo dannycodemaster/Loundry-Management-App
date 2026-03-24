@@ -1,10 +1,19 @@
 import AdminLayout from '@/components/AdminLayout';
-import { defaultPricing } from '@/data/mockData';
 import { GarmentType } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 const garmentTypes: GarmentType[] = ['T-shirt', 'Shirt', 'Trousers', 'Gown', 'Native (Up & Down)', 'Suit', 'Jacket', 'Others'];
 
 const SettingsPage = () => {
+  const [pricing, setPricing] = useState<{ garment_type: string; service: string; price: number }[]>([]);
+
+  useEffect(() => {
+    supabase.from('pricing_config').select('*').then(({ data }) => {
+      if (data) setPricing(data);
+    });
+  }, []);
+
   return (
     <AdminLayout>
       <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
@@ -24,9 +33,9 @@ const SettingsPage = () => {
             <tbody>
               {garmentTypes.map(type => {
                 const prices = {
-                  washing: defaultPricing.find(p => p.garmentType === type && p.service === 'washing')?.price || 0,
-                  ironing: defaultPricing.find(p => p.garmentType === type && p.service === 'ironing')?.price || 0,
-                  'dry-cleaning': defaultPricing.find(p => p.garmentType === type && p.service === 'dry-cleaning')?.price || 0,
+                  washing: pricing.find(p => p.garment_type === type && p.service === 'washing')?.price || 0,
+                  ironing: pricing.find(p => p.garment_type === type && p.service === 'ironing')?.price || 0,
+                  'dry-cleaning': pricing.find(p => p.garment_type === type && p.service === 'dry-cleaning')?.price || 0,
                 };
                 return (
                   <tr key={type} className="border-b border-border last:border-0">
@@ -45,7 +54,7 @@ const SettingsPage = () => {
       <div className="rounded-lg border border-border bg-card p-4">
         <h2 className="text-sm font-semibold text-card-foreground mb-2">Business Info</h2>
         <p className="text-sm text-muted-foreground">FreshPress Dry Cleaners</p>
-        <p className="text-xs text-muted-foreground mt-1">Configure your business details, branches, and staff access after connecting to Lovable Cloud.</p>
+        <p className="text-xs text-muted-foreground mt-1">Powered by Lovable Cloud</p>
       </div>
     </AdminLayout>
   );

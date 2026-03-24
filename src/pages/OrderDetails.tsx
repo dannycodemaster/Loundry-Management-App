@@ -17,9 +17,9 @@ const OrderDetails = () => {
 
   const currentIdx = statusFlow.indexOf(order.status);
 
-  const handleAdvanceStatus = () => {
+  const handleAdvanceStatus = async () => {
     if (currentIdx < statusFlow.length - 1) {
-      updateOrderStatus(order.id, statusFlow[currentIdx + 1]);
+      await updateOrderStatus(order.id, statusFlow[currentIdx + 1]);
     }
   };
 

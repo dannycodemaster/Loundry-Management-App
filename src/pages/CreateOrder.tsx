@@ -5,11 +5,21 @@ import { useApp } from '@/context/AppContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Garment, GarmentType, ServiceType } from '@/types';
-import { defaultPricing } from '@/data/mockData';
 import { Plus, Trash2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 const garmentTypes: GarmentType[] = ['T-shirt', 'Shirt', 'Trousers', 'Gown', 'Native (Up & Down)', 'Suit', 'Jacket', 'Others'];
 const serviceTypes: ServiceType[] = ['washing', 'ironing', 'dry-cleaning'];
+
+interface GarmentInput {
+  id: string;
+  type: GarmentType;
+  quantity: number;
+  service: ServiceType;
+  price: number;
+}
 
 const CreateOrder = () => {
   const navigate = useNavigate();
@@ -17,15 +27,23 @@ const CreateOrder = () => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
-  const [garments, setGarments] = useState<Garment[]>([
+  const [pricing, setPricing] = useState<{ garment_type: string; service: string; price: number }[]>([]);
+  const [garments, setGarments] = useState<GarmentInput[]>([
     { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing', price: 500 },
   ]);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    supabase.from('pricing_config').select('*').then(({ data }) => {
+      if (data) setPricing(data);
+    });
+  }, []);
 
   const getPrice = (type: GarmentType, service: ServiceType) => {
-    return defaultPricing.find(p => p.garmentType === type && p.service === service)?.price || 0;
+    return pricing.find(p => p.garment_type === type && p.service === service)?.price || 0;
   };
 
-  const updateGarment = (idx: number, field: keyof Garment, value: any) => {
+  const updateGarment = (idx: number, field: keyof GarmentInput, value: any) => {
     setGarments(prev => prev.map((g, i) => {
       if (i !== idx) return g;
       const updated = { ...g, [field]: value };
@@ -40,7 +58,7 @@ const CreateOrder = () => {
   };
 
   const addGarment = () => {
-    setGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing', price: 500 }]);
+    setGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing', price: getPrice('Shirt', 'washing') || 500 }]);
   };
 
   const removeGarment = (idx: number) => {
@@ -49,27 +67,32 @@ const CreateOrder = () => {
 
   const totalCost = garments.reduce((sum, g) => sum + g.price * g.quantity, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     const orderNum = `DC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}`;
-    addOrder({
-      id: crypto.randomUUID(),
+    const result = await addOrder({
       orderNumber: orderNum,
-      customerId: crypto.randomUUID(),
+      customerId: '',
       customerName, customerPhone, customerAddress,
-      garments, totalCost,
+      garments: garments.map(g => ({ ...g, type: g.type as Garment['type'], service: g.service as Garment['service'] })),
+      totalCost,
       status: 'received', paymentStatus: 'unpaid', amountPaid: 0,
       deliveryStatus: 'none', deliveryFee: 0,
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     });
-    navigate('/orders');
+    setSubmitting(false);
+    if (result) {
+      toast.success('Order created successfully');
+      navigate('/orders');
+    } else {
+      toast.error('Failed to create order');
+    }
   };
 
   return (
     <AdminLayout>
       <h1 className="text-2xl font-bold text-foreground mb-6">Create New Order</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Customer */}
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
           <h2 className="text-sm font-semibold text-card-foreground">Customer Details</h2>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -88,7 +111,6 @@ const CreateOrder = () => {
           </div>
         </div>
 
-        {/* Garments */}
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-card-foreground">Garments</h2>
@@ -135,14 +157,13 @@ const CreateOrder = () => {
           ))}
         </div>
 
-        {/* Total & Submit */}
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-card-foreground">Total Cost</p>
             <p className="text-2xl font-bold text-primary">₦{totalCost.toLocaleString()}</p>
           </div>
-          <button type="submit" className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
-            Create Order
+          <button type="submit" disabled={submitting} className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+            {submitting ? 'Creating...' : 'Create Order'}
           </button>
         </div>
       </form>
