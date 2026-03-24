@@ -14,7 +14,178 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string
+          total_orders: number
+          total_spent: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone: string
+          total_orders?: number
+          total_spent?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          total_orders?: number
+          total_spent?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      garments: {
+        Row: {
+          created_at: string
+          custom_type: string | null
+          id: string
+          order_id: string
+          price: number
+          quantity: number
+          service: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          custom_type?: string | null
+          id?: string
+          order_id: string
+          price?: number
+          quantity?: number
+          service: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          custom_type?: string | null
+          id?: string
+          order_id?: string
+          price?: number
+          quantity?: number
+          service?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          amount_paid: number
+          assigned_rider: string | null
+          created_at: string
+          customer_address: string
+          customer_id: string
+          customer_name: string
+          customer_phone: string
+          delivery_address: string | null
+          delivery_fee: number
+          delivery_status: string
+          id: string
+          order_number: string
+          payment_method: string | null
+          payment_status: string
+          pickup_address: string | null
+          status: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          assigned_rider?: string | null
+          created_at?: string
+          customer_address?: string
+          customer_id: string
+          customer_name: string
+          customer_phone: string
+          delivery_address?: string | null
+          delivery_fee?: number
+          delivery_status?: string
+          id?: string
+          order_number: string
+          payment_method?: string | null
+          payment_status?: string
+          pickup_address?: string | null
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          assigned_rider?: string | null
+          created_at?: string
+          customer_address?: string
+          customer_id?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_address?: string | null
+          delivery_fee?: number
+          delivery_status?: string
+          id?: string
+          order_number?: string
+          payment_method?: string | null
+          payment_status?: string
+          pickup_address?: string | null
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_config: {
+        Row: {
+          garment_type: string
+          id: string
+          price: number
+          service: string
+        }
+        Insert: {
+          garment_type: string
+          id?: string
+          price?: number
+          service: string
+        }
+        Update: {
+          garment_type?: string
+          id?: string
+          price?: number
+          service?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
