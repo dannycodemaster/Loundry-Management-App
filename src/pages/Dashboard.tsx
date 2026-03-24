@@ -6,12 +6,14 @@ import { ShoppingBag, DollarSign, Clock, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { orders } = useApp();
+  const { orders, loading } = useApp();
 
   const totalRevenue = orders.reduce((sum, o) => sum + o.amountPaid, 0);
   const pendingOrders = orders.filter(o => o.status !== 'collected').length;
   const readyOrders = orders.filter(o => o.status === 'ready').length;
   const recentOrders = orders.slice(0, 5);
+
+  if (loading) return <AdminLayout><p className="text-muted-foreground p-8">Loading...</p></AdminLayout>;
 
   return (
     <AdminLayout>
