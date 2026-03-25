@@ -13,6 +13,7 @@ import Customers from "./pages/Customers";
 import CustomerPortal from "./pages/CustomerPortal";
 import SettingsPage from "./pages/SettingsPage";
 import Auth from "./pages/Auth";
+import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
         <AppProvider>
           <BrowserRouter>
             <Routes>
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
               <Route path="/customer-portal" element={<CustomerPortal />} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
