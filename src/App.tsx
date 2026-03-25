@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   if (loading) return null;
-  if (session) return <Navigate to="/" replace />;
+  if (session) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -41,10 +41,10 @@ const App = () => (
         <AppProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
               <Route path="/customer-portal" element={<CustomerPortal />} />
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/orders" element={<ProtectedRoute><OrdersList /></ProtectedRoute>} />
               <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
               <Route path="/create-order" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
