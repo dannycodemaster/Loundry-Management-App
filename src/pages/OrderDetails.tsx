@@ -1,26 +1,58 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/StatusBadge';
 import { useApp } from '@/context/AppContext';
-import { ArrowLeft, Phone, MapPin, Truck } from 'lucide-react';
-import { OrderStatus } from '@/types';
+import { ArrowLeft, Phone, MapPin, Truck, CreditCard } from 'lucide-react';
+import { OrderStatus, PaymentStatus, PaymentMethod } from '@/types';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 const statusFlow: OrderStatus[] = ['received', 'in-progress', 'ready', 'collected'];
 
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders, updateOrderStatus } = useApp();
+  const { orders, updateOrderStatus, updatePaymentStatus } = useApp();
   const order = orders.find(o => o.id === id);
+
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
 
   if (!order) return <AdminLayout><p className="text-muted-foreground p-8">Order not found</p></AdminLayout>;
 
   const currentIdx = statusFlow.indexOf(order.status);
+  const grandTotal = order.totalCost + order.deliveryFee;
+  const balance = grandTotal - order.amountPaid;
 
   const handleAdvanceStatus = async () => {
     if (currentIdx < statusFlow.length - 1) {
       await updateOrderStatus(order.id, statusFlow[currentIdx + 1]);
     }
+  };
+
+  const handleMarkPaid = async () => {
+    await updatePaymentStatus(order.id, 'paid', grandTotal, paymentMethod);
+    toast.success('Marked as fully paid');
+    setShowPaymentForm(false);
+  };
+
+  const handleMarkUnpaid = async () => {
+    await updatePaymentStatus(order.id, 'unpaid', 0);
+    toast.success('Marked as unpaid');
+    setShowPaymentForm(false);
+  };
+
+  const handlePartialPayment = async () => {
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) { toast.error('Enter a valid amount'); return; }
+    const newPaid = order.amountPaid + amount;
+    const status: PaymentStatus = newPaid >= grandTotal ? 'paid' : 'partially-paid';
+    await updatePaymentStatus(order.id, status, Math.min(newPaid, grandTotal), paymentMethod);
+    toast.success(`₦${amount.toLocaleString()} payment recorded`);
+    setPaymentAmount('');
+    setShowPaymentForm(false);
   };
 
   return (
@@ -89,19 +121,69 @@ const OrderDetails = () => {
         </div>
       </div>
 
-      {/* Payment */}
+      {/* Payment Management */}
       <div className="rounded-lg border border-border bg-card p-4 mb-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-card-foreground">Payment</h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-card-foreground">Payment</h3>
+          </div>
           <PaymentStatusBadge status={order.paymentStatus} />
         </div>
-        <div className="mt-2 text-sm text-muted-foreground">
-          <p>Paid: ₦{order.amountPaid.toLocaleString()} / ₦{order.totalCost.toLocaleString()}</p>
-          {order.paymentMethod && <p className="mt-1 capitalize">Method: {order.paymentMethod.replace('-', ' ')}</p>}
-          {order.paymentStatus !== 'paid' && (
-            <p className="mt-1 text-destructive font-medium">Balance: ₦{(order.totalCost - order.amountPaid).toLocaleString()}</p>
+
+        <div className="space-y-1.5 text-sm text-muted-foreground mb-3">
+          <div className="flex justify-between"><span>Total Cost</span><span className="text-card-foreground font-medium">₦{grandTotal.toLocaleString()}</span></div>
+          <div className="flex justify-between"><span>Amount Paid</span><span className="text-success font-medium">₦{order.amountPaid.toLocaleString()}</span></div>
+          {balance > 0 && (
+            <div className="flex justify-between"><span>Balance Remaining</span><span className="text-destructive font-bold">₦{balance.toLocaleString()}</span></div>
           )}
         </div>
+
+        {!showPaymentForm ? (
+          <button onClick={() => setShowPaymentForm(true)} className="w-full rounded-lg border border-primary bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
+            Update Payment
+          </button>
+        ) : (
+          <div className="space-y-3 pt-2 border-t border-border">
+            {/* Payment method selector */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Payment Method</label>
+              <div className="flex gap-2">
+                {(['cash', 'bank-transfer', 'pos'] as PaymentMethod[]).map(m => (
+                  <button key={m} onClick={() => setPaymentMethod(m)}
+                    className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium border transition-colors capitalize ${paymentMethod === m ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:bg-accent'}`}>
+                    {m.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Partial payment input */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Record Payment Amount</label>
+              <div className="flex gap-2">
+                <Input type="number" placeholder={`Balance: ₦${balance.toLocaleString()}`} value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} className="flex-1" />
+                <button onClick={handlePartialPayment} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                  Record
+                </button>
+              </div>
+            </div>
+
+            {/* Quick actions */}
+            <div className="flex gap-2">
+              <button onClick={handleMarkPaid} className="flex-1 rounded-lg bg-success/10 border border-success/20 px-3 py-2.5 text-xs font-medium text-success hover:bg-success/20 transition-colors">
+                Mark Fully Paid
+              </button>
+              <button onClick={handleMarkUnpaid} className="flex-1 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2.5 text-xs font-medium text-destructive hover:bg-destructive/20 transition-colors">
+                Mark Unpaid
+              </button>
+            </div>
+
+            <button onClick={() => setShowPaymentForm(false)} className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Delivery */}
