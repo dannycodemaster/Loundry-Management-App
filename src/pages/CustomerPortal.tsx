@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 const CustomerPortal = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<'login' | 'orders'>('login');
   const [loading, setLoading] = useState(false);
@@ -23,18 +23,21 @@ const CustomerPortal = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Look up customer by both email and phone
-    const { data: customers, error } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('phone', phone)
-      .eq('email', email);
+    // Look up customer by name and phone from orders
+    const { data: orderMatches, error } = await supabase
+      .from('orders')
+      .select('customer_id, customer_name')
+      .ilike('customer_name', name.trim())
+      .eq('customer_phone', phone.trim());
 
-    if (error || !customers || customers.length === 0) {
-      toast.error('No account found with this email and phone number. Please check your details.');
+    if (error || !orderMatches || orderMatches.length === 0) {
+      toast.error('No orders found with this name and phone number. Please check your details.');
       setLoading(false);
       return;
     }
+
+    const customerId = orderMatches[0].customer_id;
+    const customers = [{ id: customerId, name: orderMatches[0].customer_name }];
 
     const customer = customers[0];
     setCustomerName(customer.name);
@@ -43,7 +46,7 @@ const CustomerPortal = () => {
     const { data: orderRows } = await supabase
       .from('orders')
       .select('*')
-      .eq('customer_id', customer.id)
+      .eq('customer_id', customerId)
       .order('created_at', { ascending: false });
 
     if (!orderRows) { setOrders([]); setStep('orders'); setLoading(false); return; }
@@ -77,7 +80,7 @@ const CustomerPortal = () => {
 
   const handleLogout = () => {
     setStep('login');
-    setEmail('');
+    setName('');
     setPhone('');
     setOrders([]);
     setSelectedOrderId(null);
@@ -94,12 +97,12 @@ const CustomerPortal = () => {
             <p className="text-muted-foreground text-sm mt-2">Customer Portal</p>
           </div>
           <form onSubmit={handleLogin} className="rounded-lg border border-border bg-card p-6 space-y-4">
-            <p className="text-sm text-muted-foreground text-center">Enter the email and phone number used for your orders</p>
+            <p className="text-sm text-muted-foreground text-center">Enter the name and phone number used for your orders</p>
             <div>
-              <label className="text-sm font-medium text-card-foreground">Email Address</label>
+              <label className="text-sm font-medium text-card-foreground">Full Name</label>
               <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="pl-9" required type="email" />
+                <LogIn className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" className="pl-9" required type="text" />
               </div>
             </div>
             <div>
