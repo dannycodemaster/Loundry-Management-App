@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, ChevronRight, Mail, Phone, LogIn } from 'lucide-react';
+import { ArrowLeft, Package, ChevronRight, Phone, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { Order, Garment } from '@/types';
 import { useNavigate } from 'react-router-dom';
