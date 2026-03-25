@@ -2,54 +2,51 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
-import { Phone, ArrowLeft, Package, ChevronRight, KeyRound } from 'lucide-react';
+import { ArrowLeft, Package, ChevronRight, Mail, Phone, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { Order, Garment } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 const CustomerPortal = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'phone' | 'otp' | 'orders'>('phone');
+  const [step, setStep] = useState<'login' | 'orders'>('login');
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState('');
 
   const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({ phone });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('OTP sent');
-      setStep('otp');
-    }
-  };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: 'sms' });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
+    // Look up customer by both email and phone
+    const { data: customers, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('phone', phone)
+      .eq('email', email);
+
+    if (error || !customers || customers.length === 0) {
+      toast.error('No account found with this email and phone number. Please check your details.');
+      setLoading(false);
       return;
     }
-    await loadOrders();
-    setStep('orders');
-  };
 
-  const loadOrders = async () => {
+    const customer = customers[0];
+    setCustomerName(customer.name);
+
+    // Fetch orders for this customer
     const { data: orderRows } = await supabase
       .from('orders')
       .select('*')
-      .eq('customer_phone', phone)
+      .eq('customer_id', customer.id)
       .order('created_at', { ascending: false });
 
-    if (!orderRows) { setOrders([]); return; }
+    if (!orderRows) { setOrders([]); setStep('orders'); setLoading(false); return; }
 
     const orderIds = orderRows.map(o => o.id);
     const { data: garmentRows } = await supabase.from('garments').select('*').in('order_id', orderIds);
@@ -73,25 +70,38 @@ const CustomerPortal = () => {
       pickupAddress: o.pickup_address || undefined, deliveryAddress: o.delivery_address || undefined,
       assignedRider: o.assigned_rider || undefined, createdAt: o.created_at, updatedAt: o.updated_at,
     })));
+
+    setStep('orders');
+    setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setStep('phone');
+  const handleLogout = () => {
+    setStep('login');
+    setEmail('');
     setPhone('');
-    setOtp('');
     setOrders([]);
+    setSelectedOrderId(null);
+    setCustomerName('');
   };
 
-  if (step === 'phone') {
+  // LOGIN SCREEN
+  if (step === 'login') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm animate-fade-in">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-primary">✨ FreshPress</h1>
-            <p className="text-muted-foreground text-sm mt-2">Track your orders</p>
+            <p className="text-muted-foreground text-sm mt-2">Customer Portal</p>
           </div>
-          <form onSubmit={handleSendOtp} className="rounded-lg border border-border bg-card p-6 space-y-4">
+          <form onSubmit={handleLogin} className="rounded-lg border border-border bg-card p-6 space-y-4">
+            <p className="text-sm text-muted-foreground text-center">Enter the email and phone number used for your orders</p>
+            <div>
+              <label className="text-sm font-medium text-card-foreground">Email Address</label>
+              <div className="relative mt-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="pl-9" required type="email" />
+              </div>
+            </div>
             <div>
               <label className="text-sm font-medium text-card-foreground">Phone Number</label>
               <div className="relative mt-1">
@@ -99,45 +109,23 @@ const CustomerPortal = () => {
                 <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+234..." className="pl-9" required type="tel" />
               </div>
             </div>
-            <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              {loading ? 'Sending OTP...' : 'Send OTP'}
+            <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {loading ? 'Checking...' : <>View My Orders <LogIn className="h-4 w-4" /></>}
             </button>
-            <p className="text-xs text-center text-muted-foreground">Enter the phone number used for your orders</p>
           </form>
+          <button onClick={() => navigate('/landing')} className="w-full text-xs text-muted-foreground hover:text-foreground mt-4 text-center">
+            ← Back to home
+          </button>
         </div>
       </div>
     );
   }
 
-  if (step === 'otp') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm animate-fade-in">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-primary">✨ FreshPress</h1>
-            <p className="text-muted-foreground text-sm mt-2">Enter verification code</p>
-          </div>
-          <form onSubmit={handleVerifyOtp} className="rounded-lg border border-border bg-card p-6 space-y-4">
-            <p className="text-sm text-muted-foreground text-center">Code sent to <span className="font-medium text-card-foreground">{phone}</span></p>
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input value={otp} onChange={e => setOtp(e.target.value)} placeholder="Enter 6-digit code" className="pl-9 text-center tracking-widest text-lg" maxLength={6} required />
-            </div>
-            <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              {loading ? 'Verifying...' : 'Verify & View Orders'}
-            </button>
-            <button type="button" onClick={() => { setStep('phone'); setOtp(''); }} className="w-full text-xs text-primary hover:underline">
-              Use a different number
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
+  // ORDER DETAIL VIEW
   if (selectedOrder) {
     const statusFlow = ['received', 'in-progress', 'ready', 'collected'] as const;
     const currentIdx = statusFlow.indexOf(selectedOrder.status);
+    const balance = selectedOrder.totalCost + selectedOrder.deliveryFee - selectedOrder.amountPaid;
 
     return (
       <div className="min-h-screen bg-background p-4 max-w-lg mx-auto">
@@ -148,6 +136,8 @@ const CustomerPortal = () => {
           <h2 className="text-lg font-bold text-foreground">{selectedOrder.orderNumber}</h2>
           <OrderStatusBadge status={selectedOrder.status} />
         </div>
+
+        {/* Status Progress */}
         <div className="rounded-lg border border-border bg-card p-4 mb-4">
           <div className="flex items-center gap-1">
             {statusFlow.map((s, i) => (
@@ -160,6 +150,8 @@ const CustomerPortal = () => {
             ))}
           </div>
         </div>
+
+        {/* Garments */}
         <div className="rounded-lg border border-border bg-card p-4 mb-4">
           <h3 className="text-sm font-semibold text-card-foreground mb-2">Items</h3>
           {selectedOrder.garments.map(g => (
@@ -171,31 +163,58 @@ const CustomerPortal = () => {
               <p className="text-sm font-medium text-card-foreground">₦{(g.price * g.quantity).toLocaleString()}</p>
             </div>
           ))}
+          {selectedOrder.deliveryFee > 0 && (
+            <div className="flex justify-between py-2 border-b border-border">
+              <p className="text-sm text-muted-foreground">Delivery Fee</p>
+              <p className="text-sm font-medium text-card-foreground">₦{selectedOrder.deliveryFee.toLocaleString()}</p>
+            </div>
+          )}
           <div className="flex justify-between pt-3 mt-1">
             <span className="font-semibold text-sm text-card-foreground">Total</span>
-            <span className="font-bold text-primary">₦{selectedOrder.totalCost.toLocaleString()}</span>
+            <span className="font-bold text-primary">₦{(selectedOrder.totalCost + selectedOrder.deliveryFee).toLocaleString()}</span>
           </div>
         </div>
+
+        {/* Payment Details */}
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-semibold text-card-foreground">Payment</span>
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm font-semibold text-card-foreground">Payment Status</span>
             <PaymentStatusBadge status={selectedOrder.paymentStatus} />
           </div>
-          <p className="text-sm text-muted-foreground mt-2">Paid: ₦{selectedOrder.amountPaid.toLocaleString()}</p>
-          {selectedOrder.paymentStatus !== 'paid' && (
-            <p className="text-sm text-destructive font-medium mt-1">Balance: ₦{(selectedOrder.totalCost - selectedOrder.amountPaid).toLocaleString()}</p>
-          )}
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">Total Cost</span>
+              <span className="text-sm font-medium text-card-foreground">₦{(selectedOrder.totalCost + selectedOrder.deliveryFee).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">Amount Paid</span>
+              <span className="text-sm font-medium text-success">₦{selectedOrder.amountPaid.toLocaleString()}</span>
+            </div>
+            {balance > 0 && (
+              <div className="flex justify-between pt-2 border-t border-border">
+                <span className="text-sm font-semibold text-destructive">Remaining Balance</span>
+                <span className="text-sm font-bold text-destructive">₦{balance.toLocaleString()}</span>
+              </div>
+            )}
+            {balance <= 0 && (
+              <div className="flex justify-between pt-2 border-t border-border">
+                <span className="text-sm font-semibold text-success">Fully Paid</span>
+                <span className="text-sm font-bold text-success">✓</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
+  // ORDERS LIST
   return (
     <div className="min-h-screen bg-background p-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-foreground">My Orders</h1>
-          <p className="text-xs text-muted-foreground">{phone}</p>
+          <p className="text-xs text-muted-foreground">Welcome, {customerName}</p>
         </div>
         <button onClick={handleLogout} className="text-xs text-primary hover:underline">Logout</button>
       </div>
@@ -203,25 +222,36 @@ const CustomerPortal = () => {
       {orders.length === 0 ? (
         <div className="text-center py-12">
           <Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No orders found for this number</p>
+          <p className="text-muted-foreground">No orders found</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {orders.map(order => (
-            <button key={order.id} onClick={() => setSelectedOrderId(order.id)}
-              className="w-full text-left rounded-lg border border-border bg-card p-4 hover:bg-muted/50 transition-colors animate-fade-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-sm text-card-foreground">{order.orderNumber}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{order.garments.reduce((s, g) => s + g.quantity, 0)} items · ₦{order.totalCost.toLocaleString()}</p>
+          {orders.map(order => {
+            const balance = order.totalCost + order.deliveryFee - order.amountPaid;
+            return (
+              <button key={order.id} onClick={() => setSelectedOrderId(order.id)}
+                className="w-full text-left rounded-lg border border-border bg-card p-4 hover:bg-muted/50 transition-colors animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-sm text-card-foreground">{order.orderNumber}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {order.garments.reduce((s, g) => s + g.quantity, 0)} items · ₦{order.totalCost.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <OrderStatusBadge status={order.status} />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <OrderStatusBadge status={order.status} />
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
+                  <PaymentStatusBadge status={order.paymentStatus} />
+                  {balance > 0 && (
+                    <span className="text-xs text-destructive font-medium">Balance: ₦{balance.toLocaleString()}</span>
+                  )}
                 </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
