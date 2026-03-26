@@ -30,7 +30,7 @@ const CreateOrder = () => {
   const [customerAddress, setCustomerAddress] = useState('');
   const [pricing, setPricing] = useState<{ garment_type: string; service: string; price: number }[]>([]);
   const [garments, setGarments] = useState<GarmentInput[]>([
-    { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing', price: 500 },
+    { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing-ironing', price: 500 },
   ]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,7 +59,7 @@ const CreateOrder = () => {
   };
 
   const addGarment = () => {
-    setGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing', price: getPrice('Shirt', 'washing') || 500 }]);
+    setGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing-ironing' as ServiceType, price: getPrice('Shirt', 'washing-ironing') || 500 }]);
   };
 
   const removeGarment = (idx: number) => {
