@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/orders', label: 'Orders', icon: ShoppingBag },
   { path: '/create-order', label: 'New Order', icon: Shirt },
   { path: '/customers', label: 'Customers', icon: Users },
@@ -24,7 +24,7 @@ const AdminSidebar = () => {
     <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border min-h-screen">
       <div className="p-6">
         <h1 className="text-xl font-bold text-sidebar-primary">✨ FreshPress</h1>
-        <p className="text-xs text-sidebar-foreground/60 mt-1">Dry Cleaning Management</p>
+        <p className="text-xs text-sidebar-foreground/60 mt-1">Dry Cleaning Management System</p>
       </div>
 
       <nav className="flex-1 px-3 space-y-1">

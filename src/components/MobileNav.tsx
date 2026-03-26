@@ -3,7 +3,7 @@ import { LayoutDashboard, ShoppingBag, Users, Shirt, Menu, X } from 'lucide-reac
 import { useState } from 'react';
 
 const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Home' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
   { path: '/orders', icon: ShoppingBag, label: 'Orders' },
   { path: '/create-order', icon: Shirt, label: 'New' },
   { path: '/customers', icon: Users, label: 'Customers' },

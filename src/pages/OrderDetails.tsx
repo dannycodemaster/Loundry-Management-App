@@ -7,6 +7,7 @@ import { ArrowLeft, Phone, MapPin, Truck, CreditCard } from 'lucide-react';
 import { OrderStatus, PaymentStatus, PaymentMethod } from '@/types';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import OrderReceipt from '@/components/OrderReceipt';
 
 const statusFlow: OrderStatus[] = ['received', 'in-progress', 'ready', 'collected'];
 
@@ -19,6 +20,7 @@ const OrderDetails = () => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [showReceipt, setShowReceipt] = useState(false);
 
   if (!order) return <AdminLayout><p className="text-muted-foreground p-8">Order not found</p></AdminLayout>;
 
@@ -28,7 +30,11 @@ const OrderDetails = () => {
 
   const handleAdvanceStatus = async () => {
     if (currentIdx < statusFlow.length - 1) {
-      await updateOrderStatus(order.id, statusFlow[currentIdx + 1]);
+      const nextStatus = statusFlow[currentIdx + 1];
+      await updateOrderStatus(order.id, nextStatus);
+      if (nextStatus === 'collected') {
+        setShowReceipt(true);
+      }
     }
   };
 
@@ -197,6 +203,15 @@ const OrderDetails = () => {
           {order.deliveryAddress && <p className="text-xs text-muted-foreground mt-1">To: {order.deliveryAddress}</p>}
           {order.deliveryFee > 0 && <p className="text-xs text-muted-foreground mt-1">Fee: ₦{order.deliveryFee.toLocaleString()}</p>}
         </div>
+      )}
+      {/* Receipt Modal */}
+      {showReceipt && <OrderReceipt order={order} onClose={() => setShowReceipt(false)} />}
+
+      {/* View Receipt button for collected orders */}
+      {order.status === 'collected' && (
+        <button onClick={() => setShowReceipt(true)} className="w-full mt-4 rounded-lg border border-primary bg-primary/5 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
+          View Receipt
+        </button>
       )}
     </AdminLayout>
   );
