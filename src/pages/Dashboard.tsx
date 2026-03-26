@@ -2,13 +2,12 @@ import AdminLayout from '@/components/AdminLayout';
 import StatCard from '@/components/StatCard';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/StatusBadge';
 import { useApp } from '@/context/AppContext';
-import { ShoppingBag, DollarSign, Clock, CheckCircle } from 'lucide-react';
+import { ShoppingBag, Clock, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { orders, loading } = useApp();
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.amountPaid, 0);
   const pendingOrders = orders.filter(o => o.status !== 'collected').length;
   const readyOrders = orders.filter(o => o.status === 'ready').length;
   const recentOrders = orders.slice(0, 5);
@@ -22,9 +21,8 @@ const Dashboard = () => {
         <p className="text-muted-foreground text-sm mt-1">Welcome back! Here's your overview.</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-4 mb-8">
         <StatCard title="Total Orders" value={orders.length} icon={<ShoppingBag className="h-6 w-6" />} trend="+12% this week" />
-        <StatCard title="Revenue" value={`₦${totalRevenue.toLocaleString()}`} icon={<DollarSign className="h-6 w-6" />} trend="+8% this week" />
         <StatCard title="Pending" value={pendingOrders} icon={<Clock className="h-6 w-6" />} />
         <StatCard title="Ready" value={readyOrders} icon={<CheckCircle className="h-6 w-6" />} />
       </div>

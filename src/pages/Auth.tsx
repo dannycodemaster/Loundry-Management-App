@@ -4,6 +4,11 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Mail, Phone, ArrowRight, KeyRound } from 'lucide-react';
 
+const ALLOWED_ADMIN_EMAILS = [
+  'admin1@freshpress.com',
+  'admin2@freshpress.com',
+];
+
 const Auth = () => {
   const { signInWithOtp, verifyOtp } = useAuth();
   const [contact, setContact] = useState('');
@@ -14,6 +19,10 @@ const Auth = () => {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === 'email' && !ALLOWED_ADMIN_EMAILS.includes(contact.toLowerCase().trim())) {
+      toast.error('This email is not authorized for admin access');
+      return;
+    }
     setLoading(true);
     const { error } = await signInWithOtp(contact);
     setLoading(false);
