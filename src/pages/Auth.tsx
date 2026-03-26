@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import { Mail, Phone, ArrowRight, KeyRound } from 'lucide-react';
 
 const ALLOWED_ADMIN_EMAILS = [
-  'admin1@freshpress.com',
-  'admin2@freshpress.com',
+  'danieldavid1200@gmail.com',
+  'wakwedavid9@gmail.com',
 ];
 
 const Auth = () => {
