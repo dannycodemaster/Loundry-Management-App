@@ -115,7 +115,7 @@ const OrderDetails = () => {
             <div key={g.id} className="flex items-center justify-between py-2.5">
               <div>
                 <p className="text-sm font-medium text-card-foreground">{g.type}{g.customType ? ` (${g.customType})` : ''}</p>
-                <p className="text-xs text-muted-foreground">{g.service} × {g.quantity}</p>
+                <p className="text-xs text-muted-foreground">{g.service === 'washing-ironing' ? 'Washing, Drying & Ironing' : 'Ironing'} × {g.quantity}</p>
               </div>
               <p className="text-sm font-semibold text-card-foreground">₦{(g.price * g.quantity).toLocaleString()}</p>
             </div>

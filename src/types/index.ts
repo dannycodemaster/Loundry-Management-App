@@ -1,5 +1,5 @@
 export type GarmentType = 'T-shirt' | 'Shirt' | 'Trousers' | 'Gown' | 'Native (Up & Down)' | 'Suit' | 'Jacket' | 'Curtains' | 'Duvet' | 'Bedsheet' | 'Pillow Case' | 'Shorts' | 'Head-tied' | 'Hijab' | 'Jalabiya (Men)' | 'Jalabiya (Women)' | 'Others';
-export type ServiceType = 'washing' | 'ironing' | 'dry-cleaning';
+export type ServiceType = 'washing-ironing' | 'ironing';
 export type OrderStatus = 'received' | 'in-progress' | 'ready' | 'collected';
 export type PaymentStatus = 'paid' | 'partially-paid' | 'unpaid';
 export type PaymentMethod = 'cash' | 'bank-transfer' | 'pos';

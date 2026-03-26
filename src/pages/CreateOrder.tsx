@@ -11,7 +11,8 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 const garmentTypes: GarmentType[] = ['T-shirt', 'Shirt', 'Trousers', 'Gown', 'Native (Up & Down)', 'Suit', 'Jacket', 'Curtains', 'Duvet', 'Bedsheet', 'Pillow Case', 'Shorts', 'Head-tied', 'Hijab', 'Jalabiya (Men)', 'Jalabiya (Women)', 'Others'];
-const serviceTypes: ServiceType[] = ['washing', 'ironing', 'dry-cleaning'];
+const serviceTypes: ServiceType[] = ['washing-ironing', 'ironing'];
+const serviceLabels: Record<ServiceType, string> = { 'washing-ironing': 'Washing, Drying & Ironing', 'ironing': 'Ironing' };
 
 interface GarmentInput {
   id: string;
@@ -29,7 +30,7 @@ const CreateOrder = () => {
   const [customerAddress, setCustomerAddress] = useState('');
   const [pricing, setPricing] = useState<{ garment_type: string; service: string; price: number }[]>([]);
   const [garments, setGarments] = useState<GarmentInput[]>([
-    { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing', price: 500 },
+    { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing-ironing', price: 500 },
   ]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -58,7 +59,7 @@ const CreateOrder = () => {
   };
 
   const addGarment = () => {
-    setGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing', price: getPrice('Shirt', 'washing') || 500 }]);
+    setGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing-ironing' as ServiceType, price: getPrice('Shirt', 'washing-ironing') || 500 }]);
   };
 
   const removeGarment = (idx: number) => {
@@ -141,7 +142,7 @@ const CreateOrder = () => {
                   <Label className="text-xs">Service</Label>
                   <select value={g.service} onChange={e => updateGarment(idx, 'service', e.target.value)}
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground">
-                    {serviceTypes.map(s => <option key={s} value={s}>{s.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
+                    {serviceTypes.map(s => <option key={s} value={s}>{serviceLabels[s]}</option>)}
                   </select>
                 </div>
                 <div>

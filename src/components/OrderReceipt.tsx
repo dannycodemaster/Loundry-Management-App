@@ -1,5 +1,6 @@
+import { useRef } from 'react';
 import { Order } from '@/types';
-import { X, Printer } from 'lucide-react';
+import { X, Printer, Download } from 'lucide-react';
 
 interface OrderReceiptProps {
   order: Order;
@@ -7,11 +8,24 @@ interface OrderReceiptProps {
 }
 
 const OrderReceipt = ({ order, onClose }: OrderReceiptProps) => {
+  const receiptRef = useRef<HTMLDivElement>(null);
   const totalItems = order.garments.reduce((sum, g) => sum + g.quantity, 0);
   const grandTotal = order.totalCost + order.deliveryFee;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = () => {
+    if (!receiptRef.current) return;
+    const content = receiptRef.current.innerText;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Receipt-${order.orderNumber}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -24,7 +38,7 @@ const OrderReceipt = ({ order, onClose }: OrderReceiptProps) => {
           </button>
         </div>
 
-        <div className="p-6 space-y-4" id="receipt-content">
+        <div className="p-6 space-y-4" id="receipt-content" ref={receiptRef}>
           <div className="text-center">
             <h2 className="text-lg font-bold text-foreground">✨ FreshPress</h2>
             <p className="text-xs text-muted-foreground">Dry Cleaning Management System</p>
@@ -87,9 +101,12 @@ const OrderReceipt = ({ order, onClose }: OrderReceiptProps) => {
           </div>
         </div>
 
-        <div className="p-4 border-t border-border print:hidden">
-          <button onClick={handlePrint} className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Printer className="h-4 w-4" /> Print Receipt
+        <div className="p-4 border-t border-border print:hidden flex gap-2">
+          <button onClick={handlePrint} className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <Printer className="h-4 w-4" /> Print
+          </button>
+          <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-primary bg-primary/5 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
+            <Download className="h-4 w-4" /> Download
           </button>
         </div>
       </div>
