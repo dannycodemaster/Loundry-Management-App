@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { useApp } from '@/context/AppContext';
@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Garment, GarmentType, ServiceType } from '@/types';
 import { Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect } from 'react';
 import { toast } from 'sonner';
+import OrderReceipt from '@/components/OrderReceipt';
+import { Order } from '@/types';
 
-const garmentTypes: GarmentType[] = ['T-shirt', 'Shirt', 'Trousers', 'Gown', 'Native (Up & Down)', 'Suit', 'Jacket', 'Curtains', 'Duvet', 'Bedsheet', 'Pillow Case', 'Shorts', 'Head-tied', 'Hijab', 'Jalabiya (Men)', 'Jalabiya (Women)', 'Others'];
+const garmentTypes: GarmentType[] = ['T-shirt', 'Shirt', 'Trousers', 'Gown', 'Native (Up & Down)', 'Suit', 'Jacket', 'Curtains', 'Duvet', 'Bedsheet', 'Pillow Case', 'Shorts', 'Head-tied', 'Hijab', 'Jalabiya (Men)', 'Jalabiya (Women)', 'Children Clothes', 'Others'];
 const serviceTypes: ServiceType[] = ['washing-ironing', 'ironing'];
 const serviceLabels: Record<ServiceType, string> = { 'washing-ironing': 'Washing, Drying & Ironing', 'ironing': 'Ironing' };
 
@@ -24,7 +25,7 @@ interface GarmentInput {
 
 const CreateOrder = () => {
   const navigate = useNavigate();
-  const { addOrder } = useApp();
+  const { addOrder, orders } = useApp();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
@@ -33,6 +34,8 @@ const CreateOrder = () => {
     { id: crypto.randomUUID(), type: 'Shirt', quantity: 1, service: 'washing-ironing', price: 500 },
   ]);
   const [submitting, setSubmitting] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     supabase.from('pricing_config').select('*').then(({ data }) => {
@@ -84,7 +87,29 @@ const CreateOrder = () => {
     setSubmitting(false);
     if (result) {
       toast.success('Order created successfully');
-      navigate('/orders');
+      // Find the created order from refreshed orders to show receipt
+      setTimeout(() => {
+        const order = orders.find(o => o.id === result);
+        if (order) {
+          setCreatedOrder(order);
+          setShowReceipt(true);
+        } else {
+          // Build a temporary order object for the receipt
+          setCreatedOrder({
+            id: result,
+            orderNumber: orderNum,
+            customerId: '',
+            customerName, customerPhone, customerAddress,
+            garments: garments.map(g => ({ ...g, type: g.type as Garment['type'], service: g.service as Garment['service'] })),
+            totalCost,
+            status: 'received', paymentStatus: 'unpaid', amountPaid: 0,
+            deliveryStatus: 'none', deliveryFee: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+          setShowReceipt(true);
+        }
+      }, 500);
     } else {
       toast.error('Failed to create order');
     }
@@ -168,6 +193,10 @@ const CreateOrder = () => {
           </button>
         </div>
       </form>
+
+      {showReceipt && createdOrder && (
+        <OrderReceipt order={createdOrder} onClose={() => { setShowReceipt(false); navigate('/orders'); }} />
+      )}
     </AdminLayout>
   );
 };
