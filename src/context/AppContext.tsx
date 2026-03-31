@@ -98,6 +98,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const { data: existingCustomer } = await supabase
       .from('customers')
       .select('id')
+      .eq('name', order.customerName)
       .eq('phone', order.customerPhone)
       .maybeSingle();
 
