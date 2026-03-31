@@ -139,11 +139,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }));
     await supabase.from('garments').insert(garmentInserts);
 
-    // Update customer stats
-    await supabase.from('customers').update({
-      total_orders: (existingCustomer ? 1 : 1), // Will be incremented properly via refresh
-      total_spent: order.totalCost,
-    }).eq('id', customerId);
+    // Increment customer stats properly
+    await supabase.rpc('increment_customer_stats', {
+      p_customer_id: customerId,
+      p_order_cost: order.totalCost,
+    });
 
     await refreshOrders();
     await refreshCustomers();

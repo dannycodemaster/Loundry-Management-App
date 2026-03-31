@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, ChevronRight, Phone, LogIn } from 'lucide-react';
+import { ArrowLeft, Package, ChevronRight, Phone, LogIn, Shirt } from 'lucide-react';
 import { toast } from 'sonner';
 import { Order, Garment } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +23,6 @@ const CustomerPortal = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Look up customer by name and phone from orders
     const { data: orderMatches, error } = await supabase
       .from('orders')
       .select('customer_id, customer_name')
@@ -37,12 +36,8 @@ const CustomerPortal = () => {
     }
 
     const customerId = orderMatches[0].customer_id;
-    const customers = [{ id: customerId, name: orderMatches[0].customer_name }];
+    setCustomerName(orderMatches[0].customer_name);
 
-    const customer = customers[0];
-    setCustomerName(customer.name);
-
-    // Fetch orders for this customer
     const { data: orderRows } = await supabase
       .from('orders')
       .select('*')
@@ -87,6 +82,12 @@ const CustomerPortal = () => {
     setCustomerName('');
   };
 
+  // Totals across all orders
+  const totalClothes = orders.reduce((sum, o) => sum + o.garments.reduce((s, g) => s + g.quantity, 0), 0);
+  const totalCost = orders.reduce((sum, o) => sum + o.totalCost + o.deliveryFee, 0);
+  const totalPaid = orders.reduce((sum, o) => sum + o.amountPaid, 0);
+  const totalBalance = totalCost - totalPaid;
+
   // LOGIN SCREEN
   if (step === 'login') {
     return (
@@ -129,6 +130,7 @@ const CustomerPortal = () => {
     const statusFlow = ['received', 'in-progress', 'ready', 'collected'] as const;
     const currentIdx = statusFlow.indexOf(selectedOrder.status);
     const balance = selectedOrder.totalCost + selectedOrder.deliveryFee - selectedOrder.amountPaid;
+    const orderTotalClothes = selectedOrder.garments.reduce((s, g) => s + g.quantity, 0);
 
     return (
       <div className="min-h-screen bg-background p-4 max-w-lg mx-auto">
@@ -142,6 +144,7 @@ const CustomerPortal = () => {
 
         {/* Status Progress */}
         <div className="rounded-lg border border-border bg-card p-4 mb-4">
+          <h3 className="text-sm font-semibold text-card-foreground mb-3">Order Progress</h3>
           <div className="flex items-center gap-1">
             {statusFlow.map((s, i) => (
               <div key={s} className="flex-1">
@@ -152,16 +155,27 @@ const CustomerPortal = () => {
               </div>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            {currentIdx === 0 && '🧺 Your clothes have been received and are awaiting processing.'}
+            {currentIdx === 1 && '🫧 Your clothes are currently being cleaned.'}
+            {currentIdx === 2 && '✅ Your clothes are ready for pickup/delivery!'}
+            {currentIdx === 3 && '🎉 Order completed. Thank you!'}
+          </p>
         </div>
 
-        {/* Garments */}
+        {/* Clothes Summary */}
         <div className="rounded-lg border border-border bg-card p-4 mb-4">
-          <h3 className="text-sm font-semibold text-card-foreground mb-2">Items</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <Shirt className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-card-foreground">Clothes Given ({orderTotalClothes} items)</h3>
+          </div>
           {selectedOrder.garments.map(g => (
             <div key={g.id} className="flex justify-between py-2 border-b border-border last:border-0">
               <div>
-                <p className="text-sm text-card-foreground">{g.type}</p>
-                <p className="text-xs text-muted-foreground">{g.service} × {g.quantity}</p>
+                <p className="text-sm text-card-foreground">{g.type}{g.customType ? ` (${g.customType})` : ''}</p>
+                <p className="text-xs text-muted-foreground">
+                  {g.service === 'washing-ironing' ? 'Washing, Drying & Ironing' : 'Ironing'} × {g.quantity}
+                </p>
               </div>
               <p className="text-sm font-medium text-card-foreground">₦{(g.price * g.quantity).toLocaleString()}</p>
             </div>
@@ -191,7 +205,7 @@ const CustomerPortal = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Amount Paid</span>
-              <span className="text-sm font-medium text-success">₦{selectedOrder.amountPaid.toLocaleString()}</span>
+              <span className="text-sm font-medium text-green-600">₦{selectedOrder.amountPaid.toLocaleString()}</span>
             </div>
             {balance > 0 && (
               <div className="flex justify-between pt-2 border-t border-border">
@@ -201,8 +215,8 @@ const CustomerPortal = () => {
             )}
             {balance <= 0 && (
               <div className="flex justify-between pt-2 border-t border-border">
-                <span className="text-sm font-semibold text-success">Fully Paid</span>
-                <span className="text-sm font-bold text-success">✓</span>
+                <span className="text-sm font-semibold text-green-600">Fully Paid</span>
+                <span className="text-sm font-bold text-green-600">✓</span>
               </div>
             )}
           </div>
@@ -211,16 +225,36 @@ const CustomerPortal = () => {
     );
   }
 
-  // ORDERS LIST
+  // ORDERS LIST with summary
   return (
     <div className="min-h-screen bg-background p-4 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-foreground">My Orders</h1>
           <p className="text-xs text-muted-foreground">Welcome, {customerName}</p>
         </div>
         <button onClick={handleLogout} className="text-xs text-primary hover:underline">Logout</button>
       </div>
+
+      {/* Customer Summary */}
+      {orders.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="rounded-lg border border-border bg-card p-3 text-center">
+            <p className="text-lg font-bold text-primary">{totalClothes}</p>
+            <p className="text-[10px] text-muted-foreground">Total Clothes</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3 text-center">
+            <p className="text-lg font-bold text-foreground">₦{totalCost.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Total Cost</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3 text-center">
+            <p className={`text-lg font-bold ${totalBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
+              {totalBalance > 0 ? `₦${totalBalance.toLocaleString()}` : '✓ Paid'}
+            </p>
+            <p className="text-[10px] text-muted-foreground">{totalBalance > 0 ? 'Balance' : 'Settled'}</p>
+          </div>
+        </div>
+      )}
 
       {orders.length === 0 ? (
         <div className="text-center py-12">
@@ -231,6 +265,7 @@ const CustomerPortal = () => {
         <div className="space-y-3">
           {orders.map(order => {
             const balance = order.totalCost + order.deliveryFee - order.amountPaid;
+            const clothesCount = order.garments.reduce((s, g) => s + g.quantity, 0);
             return (
               <button key={order.id} onClick={() => setSelectedOrderId(order.id)}
                 className="w-full text-left rounded-lg border border-border bg-card p-4 hover:bg-muted/50 transition-colors animate-fade-in">
@@ -238,7 +273,7 @@ const CustomerPortal = () => {
                   <div>
                     <p className="font-medium text-sm text-card-foreground">{order.orderNumber}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {order.garments.reduce((s, g) => s + g.quantity, 0)} items · ₦{order.totalCost.toLocaleString()}
+                      {clothesCount} clothes · ₦{order.totalCost.toLocaleString()}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
