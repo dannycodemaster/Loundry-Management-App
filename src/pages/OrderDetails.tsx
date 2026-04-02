@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/StatusBadge';
 import { useApp } from '@/context/AppContext';
-import { ArrowLeft, Phone, MapPin, Truck, CreditCard, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Truck, CreditCard, Trash2, Pencil, Plus } from 'lucide-react';
 import { OrderStatus, PaymentStatus, PaymentMethod, GarmentType, ServiceType } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
