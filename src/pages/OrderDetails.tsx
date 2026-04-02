@@ -56,15 +56,24 @@ const OrderDetails = () => {
     setEditName(order.customerName);
     setEditPhone(order.customerPhone);
     setEditAddress(order.customerAddress);
-    setEditGarments(order.garments.map(g => ({
+    const mapped = order.garments.map(g => ({
       id: g.id,
       type: g.type,
       quantity: g.quantity,
       service: g.service,
       price: g.price,
       custom_type: g.customType,
-    })));
+    }));
+    setEditGarments(mapped.length > 0 ? mapped : [{ id: crypto.randomUUID(), type: 'Shirt' as GarmentType, quantity: 1, service: 'washing-ironing' as ServiceType, price: 500 }]);
     setIsEditing(true);
+  };
+
+  const addEditGarment = () => {
+    setEditGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt' as GarmentType, quantity: 1, service: 'washing-ironing' as ServiceType, price: 500 }]);
+  };
+
+  const removeEditGarment = (idx: number) => {
+    if (editGarments.length > 1) setEditGarments(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleSaveEdit = async () => {
