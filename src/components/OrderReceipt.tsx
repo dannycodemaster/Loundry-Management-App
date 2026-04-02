@@ -108,8 +108,8 @@ const OrderReceipt = ({ order, onClose }: OrderReceiptProps) => {
 
           <div style={{ borderTop: '1px dashed #ddd', paddingTop: '12px' }} className="space-y-1.5 text-sm">
             <div className="flex justify-between">
-              <span style={{ color: '#888' }}>Total Items</span>
-              <span className="font-medium" style={{ color: '#111' }}>{totalItems}</span>
+              <span style={{ color: '#888' }}>Total Clothes</span>
+              <span className="font-medium" style={{ color: '#111' }}>{totalItems} pcs</span>
             </div>
             {order.deliveryFee > 0 && (
               <div className="flex justify-between">
