@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/StatusBadge';
 import { useApp } from '@/context/AppContext';
-import { ArrowLeft, Phone, MapPin, Truck, CreditCard, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Truck, CreditCard, Trash2, Pencil, Plus } from 'lucide-react';
 import { OrderStatus, PaymentStatus, PaymentMethod, GarmentType, ServiceType } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,15 +56,24 @@ const OrderDetails = () => {
     setEditName(order.customerName);
     setEditPhone(order.customerPhone);
     setEditAddress(order.customerAddress);
-    setEditGarments(order.garments.map(g => ({
+    const mapped = order.garments.map(g => ({
       id: g.id,
       type: g.type,
       quantity: g.quantity,
       service: g.service,
       price: g.price,
       custom_type: g.customType,
-    })));
+    }));
+    setEditGarments(mapped.length > 0 ? mapped : [{ id: crypto.randomUUID(), type: 'Shirt' as GarmentType, quantity: 1, service: 'washing-ironing' as ServiceType, price: 500 }]);
     setIsEditing(true);
+  };
+
+  const addEditGarment = () => {
+    setEditGarments(prev => [...prev, { id: crypto.randomUUID(), type: 'Shirt' as GarmentType, quantity: 1, service: 'washing-ironing' as ServiceType, price: 500 }]);
+  };
+
+  const removeEditGarment = (idx: number) => {
+    if (editGarments.length > 1) setEditGarments(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleSaveEdit = async () => {
@@ -188,9 +197,23 @@ const OrderDetails = () => {
           </div>
 
           <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-card-foreground">Edit Garments</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-card-foreground">Edit Garments</h3>
+              <button type="button" onClick={addEditGarment} className="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                <Plus className="h-3 w-3" /> Add Item
+              </button>
+            </div>
             {editGarments.map((g, idx) => (
-              <div key={idx} className="grid gap-3 sm:grid-cols-4 p-3 border border-border rounded-lg">
+              <div key={idx} className="p-3 border border-border rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Item {idx + 1}</span>
+                  {editGarments.length > 1 && (
+                    <button type="button" onClick={() => removeEditGarment(idx)} className="text-destructive hover:text-destructive/80">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-4">
                 <div>
                   <Label className="text-xs">Type</Label>
                   <select value={g.type} onChange={e => { const updated = [...editGarments]; updated[idx].type = e.target.value as GarmentType; setEditGarments(updated); }}
@@ -207,6 +230,7 @@ const OrderDetails = () => {
                 </div>
                 <div><Label className="text-xs">Qty</Label><Input type="number" min={1} value={g.quantity} onChange={e => { const updated = [...editGarments]; updated[idx].quantity = parseInt(e.target.value) || 1; setEditGarments(updated); }} /></div>
                 <div><Label className="text-xs">Price (₦)</Label><Input type="number" value={g.price} onChange={e => { const updated = [...editGarments]; updated[idx].price = parseInt(e.target.value) || 0; setEditGarments(updated); }} /></div>
+                </div>
               </div>
             ))}
             <p className="text-sm font-semibold text-primary text-right">Total: ₦{editGarments.reduce((s, g) => s + g.price * g.quantity, 0).toLocaleString()}</p>
