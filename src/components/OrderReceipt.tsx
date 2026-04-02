@@ -97,12 +97,14 @@ const OrderReceipt = ({ order, onClose }: OrderReceiptProps) => {
           <div style={{ borderTop: '1px dashed #ddd', paddingTop: '12px' }}>
             <p className="text-xs font-semibold mb-2" style={{ color: '#888' }}>ITEMS</p>
             <div className="space-y-1.5">
-              {order.garments.map(g => (
+              {order.garments.length > 0 ? order.garments.map(g => (
                 <div key={g.id} className="flex justify-between text-sm">
                   <span style={{ color: '#111' }}>{g.type}{g.customType ? ` (${g.customType})` : ''} × {g.quantity}</span>
                   <span className="font-medium" style={{ color: '#111' }}>₦{(g.price * g.quantity).toLocaleString()}</span>
                 </div>
-              ))}
+              )) : (
+                <p className="text-xs italic" style={{ color: '#888' }}>No items recorded</p>
+              )}
             </div>
           </div>
 
