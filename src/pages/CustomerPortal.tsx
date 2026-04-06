@@ -273,7 +273,7 @@ const CustomerPortal = () => {
                   <div>
                     <p className="font-medium text-sm text-card-foreground">{order.orderNumber}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {clothesCount} clothes · ₦{order.totalCost.toLocaleString()}
+                      {clothesCount} clothes
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -281,11 +281,14 @@ const CustomerPortal = () => {
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
-                <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
-                  <PaymentStatusBadge status={order.paymentStatus} />
-                  {balance > 0 && (
-                    <span className="text-xs text-destructive font-medium">Balance: ₦{balance.toLocaleString()}</span>
-                  )}
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                  <div className="flex items-center gap-3">
+                    <PaymentStatusBadge status={order.paymentStatus} />
+                    {balance > 0 && (
+                      <span className="text-xs text-destructive font-medium">Balance: ₦{balance.toLocaleString()}</span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-primary">₦{(order.totalCost + order.deliveryFee).toLocaleString()}</span>
                 </div>
               </button>
             );
