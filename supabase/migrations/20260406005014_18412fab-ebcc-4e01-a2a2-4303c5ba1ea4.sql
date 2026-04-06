@@ -1,0 +1,2 @@
+ALTER TABLE public.garments DROP CONSTRAINT garments_service_check;
+ALTER TABLE public.garments ADD CONSTRAINT garments_service_check CHECK (service = ANY (ARRAY['washing'::text, 'ironing'::text, 'dry-cleaning'::text, 'washing-ironing'::text]));

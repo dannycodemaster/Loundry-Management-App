@@ -130,15 +130,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (error || !newOrder) return null;
 
     // Insert garments
-    const garmentInserts = order.garments.map(g => ({
-      order_id: newOrder.id,
-      type: g.type,
-      custom_type: g.customType,
-      quantity: g.quantity,
-      service: g.service,
-      price: g.price,
-    }));
-    await supabase.from('garments').insert(garmentInserts);
+    if (order.garments.length > 0) {
+      const garmentInserts = order.garments.map(g => ({
+        order_id: newOrder.id,
+        type: g.type,
+        custom_type: g.customType || null,
+        quantity: g.quantity,
+        service: g.service,
+        price: g.price,
+      }));
+      const { error: garmentError } = await supabase.from('garments').insert(garmentInserts);
+      if (garmentError) {
+        console.error('Failed to insert garments:', garmentError);
+      }
+    }
 
     // Increment customer stats properly
     await supabase.rpc('increment_customer_stats', {
