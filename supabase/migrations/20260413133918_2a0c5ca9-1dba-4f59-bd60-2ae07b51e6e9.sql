@@ -1,0 +1,1 @@
+DROP POLICY "Anon can select customers by email and phone" ON public.customers;
