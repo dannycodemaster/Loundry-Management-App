@@ -1,3 +1,4 @@
+<img width="953" height="382" alt="fp1" src="https://github.com/user-attachments/assets/e84cdbe5-14f4-4c09-9665-9870cf3d4c93" />
 <img width="1685" height="704" alt="Screenshot 2026-04-28 141927" src="https://github.com/user-attachments/assets/5db1bf45-0d62-41f5-b18b-74efe36b1b2f" />
 <img width="1904" height="750" alt="Screenshot 2026-04-28 141745" src="https://github.com/user-attachments/assets/532fd6fe-cd0c-40c7-826a-d1c32cbb1ae8" />
 <img width="1891" height="761" alt="Screenshot 2026-04-28 141658" src="https://github.com/user-attachments/assets/b7da0e61-f9e3-4e81-a5cc-d2f92340a818" />
@@ -8,7 +9,7 @@
 <img width="1809" height="672" alt="Screenshot 2026-04-28 141254" src="https://github.com/user-attachments/assets/92375146-3ddb-4de7-ad60-ba48a404ddf8" />
 <img width="1839" height="718" alt="Screenshot 2026-04-28 141212" src="https://github.com/user-attachments/assets/dc2baf6a-7d8f-4012-a4fc-688e32acf55e" />
 <img width="1907" height="764" alt="Screenshot 2026-04-28 141105" src="https://github.com/user-attachments/assets/2a2a9325-e995-4bb0-acdc-15f058ff3b8a" />
-<img width="953" height="382" alt="fp1" src="https://github.com/user-attachments/assets/e84cdbe5-14f4-4c09-9665-9870cf3d4c93" />
+
 <img width="920" height="359" alt="fp" src="https://github.com/user-attachments/assets/4572ed69-c6b4-459a-99a7-e566596427cd" />
 # Welcome to your Lovable project
 
