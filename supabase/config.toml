@@ -1,1 +1,4 @@
 project_id = "iuamfzppwnbftpuionjp"
+
+[functions.customer-portal-lookup]
+verify_jwt = false
