@@ -53,7 +53,7 @@ const Auth = () => {
       <div className="w-full max-w-sm animate-fade-in relative z-10">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-primary">✨ FreshPress</h1>
-          <p className="text-muted-foreground text-sm mt-2">Staff Login</p>
+          <p className="text-muted-foreground text-sm mt-2">Admin</p>
         </div>
 
         {step === 'contact' ? (
