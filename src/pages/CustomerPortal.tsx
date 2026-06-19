@@ -23,34 +23,23 @@ const CustomerPortal = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { data: orderMatches, error } = await supabase
-      .from('orders')
-      .select('customer_id, customer_name')
-      .ilike('customer_name', name.trim())
-      .eq('customer_phone', phone.trim());
+    const { data, error } = await supabase.functions.invoke('customer-portal-lookup', {
+      body: { name: name.trim(), phone: phone.trim() },
+    });
 
-    if (error || !orderMatches || orderMatches.length === 0) {
+    if (error || !data || !data.customerName) {
       toast.error('No orders found with this name and phone number. Please check your details.');
       setLoading(false);
       return;
     }
 
-    const customerId = orderMatches[0].customer_id;
-    setCustomerName(orderMatches[0].customer_name);
+    setCustomerName(data.customerName);
 
-    const { data: orderRows } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('customer_id', customerId)
-      .order('created_at', { ascending: false });
-
-    if (!orderRows) { setOrders([]); setStep('orders'); setLoading(false); return; }
-
-    const orderIds = orderRows.map(o => o.id);
-    const { data: garmentRows } = await supabase.from('garments').select('*').in('order_id', orderIds);
+    const orderRows = (data.orders || []) as any[];
+    const garmentRows = (data.garments || []) as any[];
 
     const garmentsByOrder: Record<string, Garment[]> = {};
-    (garmentRows || []).forEach(g => {
+    garmentRows.forEach(g => {
       if (!garmentsByOrder[g.order_id]) garmentsByOrder[g.order_id] = [];
       garmentsByOrder[g.order_id].push({
         id: g.id, type: g.type as Garment['type'], customType: g.custom_type || undefined,
