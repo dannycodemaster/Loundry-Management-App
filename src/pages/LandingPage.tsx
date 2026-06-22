@@ -27,7 +27,6 @@ const LandingPage = () => {
             </div>
             <div>
               <p className="font-semibold text-card-foreground">Admin Login</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Manage orders, customers & settings</p>
             </div>
           </button>
 
